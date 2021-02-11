@@ -11,6 +11,7 @@ const char *ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 19800;
 const int daylightOffset_sec = 0;
 struct tm timeinfo;
+struct tm timeinfo_temp;
 int eeprom_address = 0;
 bool time_get_flag = false;
 bool wifi_notconnect_flag = false;
@@ -127,10 +128,16 @@ void loop()
           break;
         }
       }
-      
+
       Serial.println(" CONNECTED");
-      getLocalTime(&timeinfo);
-      printLocalTime();
+      configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+      if(!getLocalTime(&timeinfo_temp))
+      {
+        Serial.println("Failed to obtain time");
+        wifi_notconnect_flag = true;
+      }
+      delay(1000);
+
       WiFi.disconnect(true);
       WiFi.mode(WIFI_OFF);
     }
