@@ -13,6 +13,7 @@ const int daylightOffset_sec = 0;
 struct tm timeinfo;
 int eeprom_address = 0;
 bool time_get_flag = false;
+bool wifi_notconnect_flag = false;
 unsigned long previousTime = 0;
 
 void printLocalTime()
@@ -72,6 +73,7 @@ void setup()
     if (count > 20)
     {
       Serial.print(" NOT");
+      wifi_notconnect_flag = true;
       break;
     }
   }
@@ -108,6 +110,30 @@ void loop()
     eeprom_address += sizeof(int);
     EEPROM.commit();
     Serial.println("Saved latest time to EEPROM");
+
+    if (wifi_notconnect_flag)
+    {
+      WiFi.begin(ssid, password);
+      int count = 0;
+      while (WiFi.status() != WL_CONNECTED)
+      {
+        wifi_notconnect_flag = false;
+        count++;
+        delay(500);
+        if (count > 10)
+        {
+          wifi_notconnect_flag = true;
+          Serial.print("NOT ");
+          break;
+        }
+      }
+      
+      Serial.println(" CONNECTED");
+      getLocalTime(&timeinfo);
+      printLocalTime();
+      WiFi.disconnect(true);
+      WiFi.mode(WIFI_OFF);
+    }
   }
   delay(1000);
   printLocalTime();
